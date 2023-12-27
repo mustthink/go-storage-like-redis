@@ -91,3 +91,11 @@ simple client (not fully functional)
 ## Tests
 Project has two integration tests, because I don't have enough time for full coverage of project. 
 > All tests - PASS
+
+
+## TODO or what can be added in future updates
+1) Parallel serving of requests (two or more server's)
+2) Add metrics like Prometheus for analysis how well the service works 
+3) Add `set/get/delete` requests for many objects
+4) Add refreshing objects (object should refresh his data after it expire)
+5) Something else...  
