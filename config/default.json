@@ -1,0 +1,17 @@
+{
+  "server": {
+    "host": "localhost",
+    "port": "8081",
+    "read_timeout_in_ms": 10000,
+    "write_timeout_in_ms": 10000,
+    "auth": {
+      "user": "",
+      "pass": ""
+    }
+  },
+  "storage": {
+    "ttl_in_seconds": 60,
+    "max_collections_count": 1000,
+    "refresh_time_in_seconds": 10
+  }
+}
