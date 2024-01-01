@@ -52,7 +52,7 @@ func New(data []byte, opts ...Opt) Object {
 func (s RequestSettings) New(defaultTimeout time.Duration) Object {
 	switch {
 	case s.Timeout != 0:
-		return New(s.Data, WithTimeout(s.Timeout))
+		return New(s.Data, WithTimeout(s.Timeout*time.Second))
 	case !s.Deadline.IsZero():
 		return New(s.Data, WithDeadline(s.Deadline))
 	case s.Timeless:
