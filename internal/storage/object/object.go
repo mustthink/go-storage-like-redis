@@ -47,18 +47,14 @@ func New(data []byte, opts ...Opt) Object {
 }
 
 func (s RequestSettings) New(defaultTimeout time.Duration) Object {
-	if s.Timeout != 0 {
+	switch {
+	case s.Timeout != 0:
 		return New(s.Data, WithTimeout(s.Timeout))
-	}
-
-	if !s.Deadline.IsZero() {
+	case !s.Deadline.IsZero():
 		return New(s.Data, WithDeadline(s.Deadline))
-	}
-
-	if s.Timeless {
+	case s.Timeless:
 		return New(s.Data, WithoutTimeout())
 	}
-
 	return New(s.Data, WithTimeout(defaultTimeout))
 }
 

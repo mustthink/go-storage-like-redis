@@ -8,9 +8,9 @@ type validateItem interface {
 
 func (s StorageConfig) Validate() error {
 	switch {
-	case s.DefaultTTL == 0:
+	case s.DefaultTTL <= 0:
 		return errors.ErrEmptyField("default_ttl")
-	case s.RefreshTime == 0:
+	case s.RefreshTime <= 0:
 		return errors.ErrEmptyField("refresh_time")
 	case s.MaxCollectionsCount <= 0:
 		return errors.ErrEmptyField("max_collections_count")
@@ -25,9 +25,9 @@ func (s ServerConfig) Validate() error {
 		return errors.ErrEmptyField("host")
 	case s.Port == "":
 		return errors.ErrEmptyField("port")
-	case s.ReadTimeout == 0:
+	case s.ReadTimeout <= 0:
 		return errors.ErrEmptyField("read_timeout")
-	case s.WriteTimeout == 0:
+	case s.WriteTimeout <= 0:
 		return errors.ErrEmptyField("write_timeout")
 	default:
 		return nil
