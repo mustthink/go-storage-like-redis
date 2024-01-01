@@ -43,8 +43,8 @@ if you want to create new collection or set object into collection you should us
 1) `type` - type of request: 
    1) use "collection" for creating new collection
    2) use "object" for setting object into collection
-2) `collection` - name of collection which you want to create or where you want to set object. If field is empty, object will set into `default` collection
-3) `key` - key for setting object into collection. If you want to create collection just leave empty. 
+2) `collection` - optional, name of collection which you want to create or where you want to set object. If field is empty, object will set into `default` collection
+3) `key` - optional, key for setting object into collection. If you want to create collection or generate new key - just leave empty. 
 4) `object` - object settings. If you want to create collection just leave empty.
 
 #### Struct of object settings
@@ -62,7 +62,7 @@ if you want to get collection or object you should use this request
 1) `type` - type of request:
     1) use "collection" for get all objects from collection
     2) use "object" for get object from collection
-2) `collection` - name of collection. If field is empty, object will set into `default` collection
+2) `collection` - optional, name of collection. If field is empty, object will set into `default` collection
 3) `key` - key for getting object from collection. If you want to get collection just leave empty.
 
 ### 2) DELETE
@@ -78,7 +78,7 @@ if you want to delete collection or object you should use this request
 ## Response 
 All request has one struct of response 
 ### Struct:
-1) `data` - binary object data. ONLY for GET requests 
+1) `data` - for GET request - binary object data, for POST request - key of object 
 2) `success` - is request successful 
 3) `error` - is request has some error
    1) `message` - error message of details 
@@ -94,8 +94,7 @@ Project has two integration tests, because I don't have enough time for full cov
 
 
 ## TODO or what can be added in future updates
-1) Parallel serving of requests (two or more server's)
-2) Add metrics like Prometheus for analysis how well the service works 
-3) Add `set/get/delete` requests for many objects
-4) Add refreshing objects (object should refresh his data after it expire)
-5) Something else...  
+1) Add metrics like Prometheus for analysis how well the service works 
+2) Add `set/get/delete` requests for many objects
+3) Add refreshing objects (object should refresh his data after it expire)
+4) Something else...  

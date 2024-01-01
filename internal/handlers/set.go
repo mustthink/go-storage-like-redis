@@ -9,7 +9,7 @@ import (
 )
 
 type (
-	// POST, PUT one object request
+	// PostRequest - POST, PUT one object request, set object to storage
 	PostRequest struct {
 		Type       string                 `json:"type"`
 		Collection string                 `json:"collection"`
@@ -43,6 +43,16 @@ func postCollectionResponse(name string, s storage.Storage) Response {
 }
 
 func postObjectResponse(collectionName, key string, objSettings object.RequestSettings, s storage.Storage) Response {
+	if key == "" {
+		newKey, err := objSettings.NewKey()
+		if err != nil {
+			errMsg := errors.ErrMsgByError(err, http.StatusInternalServerError)
+			return ResponseByError(errMsg)
+		}
+
+		key = newKey
+	}
+
 	err := storage.SetObject(s, collectionName, key, objSettings)
 	if err != nil {
 		errMsg := errors.ErrMsgByError(err, http.StatusBadRequest)
@@ -51,5 +61,6 @@ func postObjectResponse(collectionName, key string, objSettings object.RequestSe
 
 	return Response{
 		Success: true,
+		Data:    []byte(key),
 	}
 }

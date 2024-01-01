@@ -1,6 +1,9 @@
 package object
 
 import (
+	"crypto/sha256"
+	"encoding/json"
+	"fmt"
 	"time"
 )
 
@@ -56,6 +59,16 @@ func (s RequestSettings) New(defaultTimeout time.Duration) Object {
 		return New(s.Data, WithoutTimeout())
 	}
 	return New(s.Data, WithTimeout(defaultTimeout))
+}
+
+func (s RequestSettings) NewKey() (string, error) {
+	data, err := json.Marshal(s)
+	if err != nil {
+		return "", fmt.Errorf("couldn't marshal request settings w err: %s", err.Error())
+	}
+
+	hash := sha256.Sum256(data)
+	return string(hash[:]), nil
 }
 
 func (o object) Binary() []byte {
