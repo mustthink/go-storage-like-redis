@@ -67,3 +67,10 @@ func ErrMsgByError(err error, code int) Error {
 		Code:    code,
 	}
 }
+
+var (
+	ErrInvalidPostRequest = Error{
+		Message: "request MUST have ONLY map[key]object or array of objects",
+		Code:    http.StatusBadRequest,
+	}
+)

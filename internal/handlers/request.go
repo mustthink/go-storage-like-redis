@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -49,7 +48,6 @@ func (r *Request) readRequestBody(requestBody io.ReadCloser) (responseError erro
 	if err != nil {
 		responseError = errors.ErrMsgReadBody(err)
 	}
-	fmt.Println("body: ", string(body))
 
 	if err := json.Unmarshal(body, r); err != nil {
 		responseError = errors.ErrMsgUnmarshalBody(err)

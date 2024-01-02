@@ -11,8 +11,9 @@ import (
 type (
 	// PostRequest - POST, PUT collection/objects request, set objects to storage
 	PostRequest struct {
-		Collection string                            `json:"collection"`
-		Objects    map[string]object.RequestSettings `json:"objects"`
+		Collection         string                            `json:"collection"`
+		Objects            map[string]object.RequestSettings `json:"objects"`
+		ObjectsWithoutKeys []object.RequestSettings          `json:"objects_without_keys"`
 	}
 )
 
@@ -21,13 +22,24 @@ func (r PostRequest) ProcessCollection(s storage.Storage) Response {
 }
 
 func (r PostRequest) ProcessObjects(s storage.Storage) []Response {
-	var responses = make([]Response, 0, len(r.Objects))
+	if len(r.Objects) > 0 && len(r.ObjectsWithoutKeys) > 0 {
+		return []Response{ResponseByError(errors.ErrInvalidPostRequest)}
+	}
 
+	responses := make([]Response, 0, len(r.Objects))
 	for key, objSettings := range r.Objects {
 		responsePart := postObjectResponse(r.Collection, key, objSettings, s)
 		responses = append(responses, responsePart)
 	}
+	if len(responses) != 0 {
+		return responses
+	}
 
+	responses = make([]Response, 0, len(r.ObjectsWithoutKeys))
+	for _, objSettings := range r.ObjectsWithoutKeys {
+		responsePart := postObjectResponse(r.Collection, "", objSettings, s)
+		responses = append(responses, responsePart)
+	}
 	return responses
 }
 
