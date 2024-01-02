@@ -22,20 +22,12 @@ func (r PostRequest) ProcessCollection(s storage.Storage) Response {
 }
 
 func (r PostRequest) ProcessObjects(s storage.Storage) []Response {
-	if len(r.Objects) > 0 && len(r.ObjectsWithoutKeys) > 0 {
-		return []Response{ResponseByError(errors.ErrInvalidPostRequest)}
-	}
-
-	responses := make([]Response, 0, len(r.Objects))
+	responses := make([]Response, 0, len(r.Objects)+len(r.ObjectsWithoutKeys))
 	for key, objSettings := range r.Objects {
 		responsePart := postObjectResponse(r.Collection, key, objSettings, s)
 		responses = append(responses, responsePart)
 	}
-	if len(responses) != 0 {
-		return responses
-	}
 
-	responses = make([]Response, 0, len(r.ObjectsWithoutKeys))
 	for _, objSettings := range r.ObjectsWithoutKeys {
 		responsePart := postObjectResponse(r.Collection, "", objSettings, s)
 		responses = append(responses, responsePart)
