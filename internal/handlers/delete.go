@@ -8,24 +8,26 @@ import (
 )
 
 type (
-	// DELETE one object request
+	// DeleteRequest - DELETE collection/objects request
 	DeleteRequest struct {
-		Type       string `json:"type"`
-		Collection string `json:"collection"`
-		Key        string `json:"key"`
+		Collection string   `json:"collection"`
+		Keys       []string `json:"keys"`
 	}
 )
 
-func (r DeleteRequest) Process(s storage.Storage) Response {
-	switch r.Type {
-	case TypeCollection:
-		return deleteCollectionResponse(r.Collection, s)
-	case TypeObject:
-		return deleteObjectResponse(r.Collection, r.Key, s)
+func (r DeleteRequest) ProcessCollection(s storage.Storage) Response {
+	return deleteCollectionResponse(r.Collection, s)
+}
+
+func (r DeleteRequest) ProcessObjects(s storage.Storage) []Response {
+	var responses = make([]Response, 0, len(r.Keys))
+
+	for _, key := range r.Keys {
+		responsePart := deleteObjectResponse(r.Collection, key, s)
+		responses = append(responses, responsePart)
 	}
 
-	errMsg := errors.ErrMsgUnknownType(r.Type)
-	return ResponseByError(errMsg)
+	return responses
 }
 
 func deleteCollectionResponse(name string, s storage.Storage) Response {

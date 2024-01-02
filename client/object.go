@@ -56,10 +56,12 @@ func (c *Client) SetTimeless(collection, key string, obj any) error {
 }
 
 func (c *Client) Get(collection, key string, obj any) error {
-	request := handlers.GetRequest{
-		Type:       handlers.TypeObject,
-		Collection: collection,
-		Key:        key,
+	request := handlers.Request{
+		Type: handlers.TypeObject,
+		RequestProcessor: handlers.GetRequest{
+			Collection: collection,
+			Keys:       []string{key},
+		},
 	}
 
 	response, err := c.do(http.MethodGet, request)
@@ -72,10 +74,12 @@ func (c *Client) Get(collection, key string, obj any) error {
 }
 
 func (c *Client) Delete(collection, key string) error {
-	request := handlers.DeleteRequest{
-		Type:       handlers.TypeObject,
-		Collection: collection,
-		Key:        key,
+	request := handlers.Request{
+		Type: handlers.TypeObject,
+		RequestProcessor: handlers.DeleteRequest{
+			Collection: collection,
+			Keys:       []string{key},
+		},
 	}
 
 	_, err := c.do(http.MethodDelete, request)
@@ -83,11 +87,14 @@ func (c *Client) Delete(collection, key string) error {
 }
 
 func (c *Client) set(collection, key string, objSettings object.RequestSettings) error {
-	request := handlers.PostRequest{
-		Type:       handlers.TypeObject,
-		Collection: collection,
-		Key:        key,
-		Object:     objSettings,
+	request := handlers.Request{
+		Type: handlers.TypeObject,
+		RequestProcessor: handlers.PostRequest{
+			Collection: collection,
+			Objects: map[string]object.RequestSettings{
+				key: objSettings,
+			},
+		},
 	}
 
 	_, err := c.do(http.MethodPost, request)

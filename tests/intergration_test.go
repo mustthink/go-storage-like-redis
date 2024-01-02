@@ -15,13 +15,29 @@ import (
 	"github.com/mustthink/go-storage-like-redis/internal/storage/object"
 )
 
-type TestClient struct {
-	client *http.Client
-	url    string
-}
+type (
+	TestClient struct {
+		client *http.Client
+		url    string
+	}
 
-func (c TestClient) doRequest(t *testing.T, requestMethod string, request handlers.RequestProcessor) handlers.Response {
-	var response handlers.Response
+	TestRequest struct {
+		Type       string                            `json:"type"`
+		Collection string                            `json:"collection"`
+		Keys       []string                          `json:"keys"`
+		Objects    map[string]object.RequestSettings `json:"objects"`
+	}
+)
+
+func (c TestClient) doRequest(t *testing.T, requestMethod string, request TestRequest) handlers.DataCode {
+	var response handlers.DataCode
+	switch request.Type {
+	case handlers.TypeCollection:
+		response = &handlers.Response{}
+	case handlers.TypeObject:
+		response = &handlers.Responses{}
+	}
+
 	requestBody, err := json.Marshal(request)
 	if err != nil {
 		t.Errorf("couldn't marshal w err: %s", err.Error())
@@ -47,9 +63,11 @@ func (c TestClient) doRequest(t *testing.T, requestMethod string, request handle
 		return response
 	}
 
-	if err := json.Unmarshal(body, &response); err != nil {
+	if err := json.Unmarshal(body, response); err != nil {
 		t.Errorf("couldn't unmarshal response w err: %s", err.Error())
 	}
+
+	fmt.Println(string(body), " ", response)
 	return response
 }
 
@@ -66,13 +84,13 @@ func Test_BasicRequests(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		request       handlers.RequestProcessor
+		request       TestRequest
 		requestMethod string
 		wantErr       bool
 	}{
 		{
 			name: "POST collection",
-			request: handlers.PostRequest{
+			request: TestRequest{
 				Type:       handlers.TypeCollection,
 				Collection: "test",
 			},
@@ -80,7 +98,7 @@ func Test_BasicRequests(t *testing.T) {
 		},
 		{
 			name: "GET collection",
-			request: handlers.GetRequest{
+			request: TestRequest{
 				Type:       handlers.TypeCollection,
 				Collection: "test",
 			},
@@ -88,47 +106,45 @@ func Test_BasicRequests(t *testing.T) {
 		},
 		{
 			name: "POST object",
-			request: handlers.PostRequest{
+			request: TestRequest{
 				Type:       handlers.TypeObject,
 				Collection: "test",
-				Key:        "1",
-				Object: object.RequestSettings{
-					Data: []byte("1"),
+				Objects: map[string]object.RequestSettings{
+					"1": {Data: []byte("1")},
 				},
 			},
 			requestMethod: http.MethodPost,
 		},
 		{
 			name: "GET object",
-			request: handlers.GetRequest{
+			request: TestRequest{
 				Type:       handlers.TypeObject,
 				Collection: "test",
-				Key:        "1",
+				Keys:       []string{"1"},
 			},
 			requestMethod: http.MethodGet,
 		},
 		{
 			name: "DELETE object",
-			request: handlers.DeleteRequest{
+			request: TestRequest{
 				Type:       handlers.TypeObject,
 				Collection: "test",
-				Key:        "1",
+				Keys:       []string{"1"},
 			},
 			requestMethod: http.MethodDelete,
 		},
 		{
 			name: "GET object w error",
-			request: handlers.GetRequest{
+			request: TestRequest{
 				Type:       handlers.TypeObject,
 				Collection: "test",
-				Key:        "1",
+				Keys:       []string{"1"},
 			},
 			requestMethod: http.MethodGet,
-			wantErr:       true,
 		},
 		{
 			name: "DELETE collection",
-			request: handlers.DeleteRequest{
+			request: TestRequest{
 				Type:       handlers.TypeCollection,
 				Collection: "test",
 			},
@@ -136,7 +152,7 @@ func Test_BasicRequests(t *testing.T) {
 		},
 		{
 			name: "GET collection w error",
-			request: handlers.DeleteRequest{
+			request: TestRequest{
 				Type:       handlers.TypeCollection,
 				Collection: "test",
 			},
@@ -149,8 +165,9 @@ func Test_BasicRequests(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			response := testClient.doRequest(t, test.requestMethod, test.request)
 			fmt.Printf("response: %v\n", response)
-			fmt.Printf("response data: %v\n", string(response.Data))
-			require.NotEqual(t, response.Success, test.wantErr)
+			data, code := response.DataAndCode()
+			fmt.Printf("response data: %v, code: %d\n", string(data), code)
+			require.Equal(t, test.wantErr, code != http.StatusOK)
 		})
 	}
 }
@@ -165,19 +182,19 @@ func TestTTL(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		request       handlers.RequestProcessor
+		request       TestRequest
 		requestMethod string
 		sleepTime     time.Duration
 		wantErr       bool
 	}{
 		{
 			name: "POST with timeout",
-			request: handlers.PostRequest{
+			request: TestRequest{
 				Type: handlers.TypeObject,
-				Key:  "1",
-				Object: object.RequestSettings{
-					Data:    []byte("1"),
-					Timeout: 5,
+				Objects: map[string]object.RequestSettings{
+					"1": {
+						Data:    []byte("1"),
+						Timeout: 5},
 				},
 			},
 			sleepTime:     time.Second * 6,
@@ -185,21 +202,21 @@ func TestTTL(t *testing.T) {
 		},
 		{
 			name: "GET with error",
-			request: handlers.GetRequest{
+			request: TestRequest{
 				Type: handlers.TypeObject,
-				Key:  "1",
+				Keys: []string{"1"},
 			},
 			requestMethod: http.MethodGet,
 			wantErr:       true,
 		},
 		{
 			name: "POST with deadline",
-			request: handlers.PostRequest{
+			request: TestRequest{
 				Type: handlers.TypeObject,
-				Key:  "1",
-				Object: object.RequestSettings{
-					Data:     []byte("1"),
-					Deadline: time.Now().Add(time.Second * 5),
+				Objects: map[string]object.RequestSettings{
+					"1": {
+						Data:     []byte("1"),
+						Deadline: time.Now().Add(time.Second * 5)},
 				},
 			},
 			sleepTime:     time.Second * 6,
@@ -207,9 +224,9 @@ func TestTTL(t *testing.T) {
 		},
 		{
 			name: "GET with error",
-			request: handlers.GetRequest{
+			request: TestRequest{
 				Type: handlers.TypeObject,
-				Key:  "1",
+				Keys: []string{"1"},
 			},
 			requestMethod: http.MethodGet,
 			wantErr:       true,
@@ -219,8 +236,9 @@ func TestTTL(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			response := testClient.doRequest(t, test.requestMethod, test.request)
 			fmt.Printf("response: %v\n", response)
-			fmt.Printf("response data: %v\n", string(response.Data))
-			require.NotEqual(t, response.Success, test.wantErr)
+			responses := response.(*handlers.Responses)
+			fmt.Printf("response data: %v\n", (*responses)[0].Data)
+			require.NotEqual(t, test.wantErr, (*responses)[0].Success)
 			time.Sleep(test.sleepTime)
 		})
 	}

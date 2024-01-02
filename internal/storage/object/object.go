@@ -22,7 +22,7 @@ type (
 	Opt func(object) object
 
 	// RequestSettings is settings for add new object
-	// priority of opts timeless > deadline > timeout
+	// priority of opts timeout -> deadline -> timeless
 	RequestSettings struct {
 		Data []byte `json:"data"`
 

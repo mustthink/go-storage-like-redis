@@ -9,24 +9,26 @@ import (
 )
 
 type (
-	// GET one object request
+	// GetRequest - GET collection/objects request
 	GetRequest struct {
-		Type       string `json:"type"`
-		Collection string `json:"collection"`
-		Key        string `json:"key"`
+		Collection string   `json:"collection"`
+		Keys       []string `json:"keys"`
 	}
 )
 
-func (r GetRequest) Process(s storage.Storage) Response {
-	switch r.Type {
-	case TypeCollection:
-		return getCollectionResponse(r.Collection, s)
-	case TypeObject:
-		return getObjectResponse(r.Collection, r.Key, s)
+func (r GetRequest) ProcessCollection(s storage.Storage) Response {
+	return getCollectionResponse(r.Collection, s)
+}
+
+func (r GetRequest) ProcessObjects(s storage.Storage) []Response {
+	var responses = make([]Response, 0, len(r.Keys))
+
+	for _, key := range r.Keys {
+		responsePart := getObjectResponse(r.Collection, key, s)
+		responses = append(responses, responsePart)
 	}
 
-	errMsg := errors.ErrMsgUnknownType(r.Type)
-	return ResponseByError(errMsg)
+	return responses
 }
 
 func getCollectionResponse(name string, s storage.Storage) Response {

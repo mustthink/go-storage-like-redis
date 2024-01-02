@@ -9,25 +9,26 @@ import (
 )
 
 type (
-	// PostRequest - POST, PUT one object request, set object to storage
+	// PostRequest - POST, PUT collection/objects request, set objects to storage
 	PostRequest struct {
-		Type       string                 `json:"type"`
-		Collection string                 `json:"collection"`
-		Key        string                 `json:"key"`
-		Object     object.RequestSettings `json:"object"`
+		Collection string                            `json:"collection"`
+		Objects    map[string]object.RequestSettings `json:"objects"`
 	}
 )
 
-func (r PostRequest) Process(s storage.Storage) Response {
-	switch r.Type {
-	case TypeCollection:
-		return postCollectionResponse(r.Collection, s)
-	case TypeObject:
-		return postObjectResponse(r.Collection, r.Key, r.Object, s)
+func (r PostRequest) ProcessCollection(s storage.Storage) Response {
+	return postCollectionResponse(r.Collection, s)
+}
+
+func (r PostRequest) ProcessObjects(s storage.Storage) []Response {
+	var responses = make([]Response, 0, len(r.Objects))
+
+	for key, objSettings := range r.Objects {
+		responsePart := postObjectResponse(r.Collection, key, objSettings, s)
+		responses = append(responses, responsePart)
 	}
 
-	errMsg := errors.ErrMsgUnknownType(r.Type)
-	return ResponseByError(errMsg)
+	return responses
 }
 
 func postCollectionResponse(name string, s storage.Storage) Response {
