@@ -12,6 +12,8 @@
   "storage": {
     "ttl_in_seconds": 60,
     "max_collections_count": 1000,
-    "refresh_time_in_seconds": 10
+    "refresh_time_in_seconds": 10,
+    "refresh_timeout_in_seconds": 10,
+    "max_concurrent_refreshes": 10
   }
 }

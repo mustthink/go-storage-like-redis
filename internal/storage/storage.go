@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"time"
 
 	"github.com/mustthink/go-storage-like-redis/config"
@@ -112,13 +113,47 @@ func (s *storage) DeleteCollection(name string) error {
 // parallel refreshing collections
 func (s *storage) refreshing() {
 	ticker := time.NewTicker(s.config.RefreshTime * time.Second)
+	timeout := s.config.RefreshTimeout * time.Second
+	semaphore := make(chan struct{}, s.config.MaxRefreshes)
+
 	for ; ; <-ticker.C {
 		for _, collection := range s.collections {
-			go collection.Refresh()
+			// waiting for permit
+			semaphore <- struct{}{}
+			// got permit and start refreshing collection
+			go refreshAndPermitNext(timeout, collection, semaphore)
 		}
 	}
 }
 
 func (s *storage) defaultTimeout() time.Duration {
 	return s.config.DefaultTTL * time.Second
+}
+
+// something creepy... but I explain
+// refreshAndPermitNext - safe refresh collection with cancel after timeout will be expired
+func refreshAndPermitNext(timeout time.Duration, collection Collection, semaphore chan struct{}) {
+	// if func end we send permit to semaphore
+	defer func() { <-semaphore }()
+	// creating context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	// if func end we cancel context
+	defer cancel()
+
+	// chan for checking: has the refreshing process been completed?
+	done := make(chan struct{})
+	// start refresh collection
+	go func() {
+		collection.Refresh(ctx)
+		// after collection successfully refreshed we will send signal to done
+		done <- struct{}{}
+	}()
+
+	// we end func after
+	select {
+	// context timeout expired
+	case <-ctx.Done():
+		// or collection successfully refreshed
+	case <-done:
+	}
 }

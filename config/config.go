@@ -19,6 +19,8 @@ type (
 		DefaultTTL          time.Duration `json:"ttl_in_seconds"`
 		MaxCollectionsCount int           `json:"max_collections_count"`
 		RefreshTime         time.Duration `json:"refresh_time_in_seconds"`
+		RefreshTimeout      time.Duration `json:"refresh_timeout_in_seconds"`
+		MaxRefreshes        int           `json:"max_concurrent_refreshes"`
 	}
 
 	ServerConfig struct {

@@ -1,6 +1,7 @@
 package storage
 
 import (
+	"context"
 	"sync"
 
 	"github.com/mustthink/go-storage-like-redis/internal/errors"
@@ -12,7 +13,7 @@ type (
 		Get(key string) (object object.Object, err error)
 		Set(key string, object object.Object)
 		Delete(key string) error
-		Refresh()
+		Refresh(context context.Context)
 	}
 
 	// collection is simple implementation of Collection
@@ -64,7 +65,7 @@ func (c collection) Delete(key string) error {
 	return nil
 }
 
-func (c collection) Refresh() {
+func (c collection) Refresh(_ context.Context) {
 	for key, obj := range c.objects {
 		if obj.IsExpired() {
 			c.Delete(key)
