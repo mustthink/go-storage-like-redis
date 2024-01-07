@@ -11,6 +11,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/mustthink/go-storage-like-redis/config"
+	"github.com/mustthink/go-storage-like-redis/internal"
 	"github.com/mustthink/go-storage-like-redis/internal/handlers"
 	"github.com/mustthink/go-storage-like-redis/internal/storage/object"
 )
@@ -28,6 +30,13 @@ type (
 		Objects    map[string]object.RequestSettings `json:"objects"`
 	}
 )
+
+func init() {
+	path := fmt.Sprintf("../%s", config.DefaultConfig)
+	app := internal.NewApplication(path)
+	// running test server
+	go app.Run()
+}
 
 func (c TestClient) doRequest(t *testing.T, requestMethod string, request TestRequest) handlers.DataCode {
 	var response handlers.DataCode
